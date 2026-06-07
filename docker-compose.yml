@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  yimi-photo:
+    image: yimi-photo:latest
+    container_name: yimi-photo
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      # 照片数据目录 (持久化存储)
+      # 请修改为你实际的照片存储路径
+      - /mnt/data_sdc1/photos:/data/photos
+      # 外置硬盘挂载 (只读，用于浏览硬盘导入)
+      # 如果不需要此功能，可以注释掉
+      - /mnt:/mnt:ro
+    environment:
+      - TZ=Asia/Shanghai
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/stats"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

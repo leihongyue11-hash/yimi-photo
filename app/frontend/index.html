@@ -1,0 +1,2842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0f0f1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.json">
+<title>壹米云相册</title>
+<style>
+/* 飞牛风格深色主题 - 移动端优化 */
+:root {
+  --bg: #0f0f1a;
+  --bg2: #1a1a2e;
+  --bg3: #16213e;
+  --card: #1e1e32;
+  --card2: #252540;
+  --primary: #6c63ff;
+  --primary2: #5a52d5;
+  --accent: #ff6b6b;
+  --text: #e8e8f0;
+  --text2: #a0a0b8;
+  --text3: #6b6b80;
+  --border: #2a2a45;
+  --shadow: rgba(0,0,0,0.3);
+  --success: #4ecdc4;
+  --warning: #ffd93d;
+  --danger: #ff6b6b;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { height: 100%; height: -webkit-fill-available; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100%;
+  height: -webkit-fill-available;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 主应用 */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  height: -webkit-fill-available;
+  height: 100dvh;
+}
+
+/* 顶部栏 - 移动端优化 */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(15,15,26,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+.header-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.header-btn:active {
+  transform: scale(0.95);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.header-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+/* 搜索栏 */
+.search-bar {
+  padding: 0 16px;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+.search-bar.show {
+  max-height: 60px;
+  padding: 8px 16px;
+}
+.search-bar input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-bar input:focus {
+  border-color: var(--primary);
+}
+.search-bar input::placeholder {
+  color: var(--text3);
+}
+
+/* 内容区域 */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding-bottom: calc(80px + var(--safe-bottom));
+}
+
+/* 底部导航 - 移动端优化 */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(15,15,26,0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding: 8px 0;
+  padding-bottom: max(8px, var(--safe-bottom));
+  z-index: 100;
+}
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+  color: var(--text3);
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-item:active {
+  transform: scale(0.95);
+}
+.nav-item .icon {
+  font-size: 24px;
+  line-height: 1;
+}
+.nav-item.active {
+  color: var(--primary);
+}
+.nav-item.active .icon {
+  transform: scale(1.1);
+}
+
+/* 页面容器 */
+.page {
+  display: none;
+  min-height: 100%;
+}
+.page.active {
+  display: block;
+}
+
+/* 时间线 */
+.timeline-header {
+  padding: 20px 16px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.timeline-header h2 {
+  font-size: 28px;
+  font-weight: 700;
+}
+.year-selector {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.year-selector::-webkit-scrollbar {
+  display: none;
+}
+.year-btn {
+  padding: 10px 18px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text2);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.year-btn:active {
+  transform: scale(0.95);
+}
+.year-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(108,99,255,0.3);
+}
+
+/* 日期分组 */
+.date-group {
+  margin-bottom: 24px;
+}
+.date-header {
+  padding: 16px 16px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+.date-header .count {
+  font-size: 12px;
+  color: var(--text3);
+  background: var(--card2);
+  padding: 4px 12px;
+  border-radius: 16px;
+}
+
+/* 照片网格 - 移动端优化 */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  padding: 0 2px;
+}
+.photo-item {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--card);
+  -webkit-tap-highlight-color: transparent;
+}
+.photo-item:active {
+  opacity: 0.8;
+}
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.photo-item .video-badge {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  background: rgba(0,0,0,0.75);
+  color: white;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+}
+.photo-item .fav-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  color: var(--accent);
+  font-size: 16px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+.photo-item .select-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid white;
+  background: rgba(0,0,0,0.3);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  backdrop-filter: blur(4px);
+}
+.select-mode .photo-item .select-badge {
+  display: flex;
+}
+.photo-item.selected .select-badge {
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(108,99,255,0.4);
+}
+
+/* 选择模式底部栏 */
+.select-bar {
+  position: fixed;
+  bottom: calc(80px + var(--safe-bottom));
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 99;
+  backdrop-filter: blur(20px);
+}
+.select-bar.show {
+  display: flex;
+}
+.select-bar .count {
+  font-size: 15px;
+  color: var(--text2);
+}
+.select-bar .count b {
+  color: var(--primary);
+}
+.select-actions {
+  display: flex;
+  gap: 8px;
+}
+.select-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.select-btn:active {
+  transform: scale(0.95);
+}
+.select-btn.primary {
+  background: var(--primary);
+  color: white;
+}
+.select-btn.danger {
+  background: var(--danger);
+  color: white;
+}
+.select-btn.ghost {
+  background: var(--card2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* 灯箱 - 移动端优化 */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0,0,0,0.97);
+  display: none;
+  flex-direction: column;
+}
+.lightbox.show {
+  display: flex;
+}
+.lightbox-header {
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+  flex-shrink: 0;
+}
+.lightbox-close {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.lightbox-close:active {
+  background: rgba(255,255,255,0.2);
+}
+.lightbox-actions {
+  display: flex;
+  gap: 10px;
+}
+.lightbox-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.lightbox-btn:active {
+  background: rgba(255,255,255,0.25);
+  transform: scale(0.95);
+}
+.lightbox-btn.active {
+  color: var(--accent);
+}
+.lightbox-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+.lightbox-content img,
+.lightbox-content video {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 80px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  font-size: 32px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.lightbox-nav:active {
+  color: white;
+  background: rgba(255,255,255,0.1);
+}
+.lightbox-nav.prev {
+  left: 0;
+  border-radius: 0 12px 12px 0;
+}
+.lightbox-nav.next {
+  right: 0;
+  border-radius: 12px 0 0 12px;
+}
+.lightbox-info {
+  padding: 16px;
+  padding-bottom: max(16px, var(--safe-bottom));
+  background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+  text-align: center;
+  flex-shrink: 0;
+}
+.lightbox-info .name {
+  font-size: 15px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.lightbox-info .meta {
+  font-size: 13px;
+  color: var(--text2);
+}
+
+/* 详情面板 */
+.detail-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px;
+  padding-bottom: max(24px, var(--safe-bottom));
+  max-height: 60vh;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  z-index: 1001;
+}
+.detail-panel.show {
+  transform: translateY(0);
+}
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+}
+.detail-row:last-child {
+  border-bottom: none;
+}
+.detail-label {
+  color: var(--text2);
+}
+.detail-value {
+  color: var(--text);
+  text-align: right;
+  max-width: 60%;
+  word-break: break-all;
+}
+
+/* 相册页面 */
+.album-header {
+  padding: 24px 16px 16px;
+}
+.album-header h2 {
+  font-size: 28px;
+  font-weight: 700;
+}
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+.album-card {
+  background: var(--card);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.album-card:active {
+  transform: scale(0.98);
+}
+.album-cover {
+  aspect-ratio: 1;
+  background: var(--card2);
+  overflow: hidden;
+}
+.album-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.album-cover .placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  background: linear-gradient(135deg, var(--bg3), var(--card2));
+}
+.album-info {
+  padding: 14px;
+}
+.album-name {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.album-count {
+  font-size: 13px;
+  color: var(--text2);
+}
+
+/* 人物页面 */
+.person-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 16px;
+}
+.person-card {
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.person-card:active {
+  transform: scale(0.95);
+}
+.person-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  background: var(--card);
+  overflow: hidden;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+.person-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.person-avatar .placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+}
+.person-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+.person-count {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+/* 收藏页面 */
+.favorites-header {
+  padding: 24px 16px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.favorites-header .icon {
+  font-size: 32px;
+}
+.favorites-header h2 {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+/* 回收站 */
+.trash-header {
+  padding: 24px 16px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.trash-header h2 {
+  font-size: 28px;
+  font-weight: 700;
+}
+.trash-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.trash-btn:active {
+  transform: scale(0.95);
+}
+.trash-btn.danger {
+  background: var(--danger);
+  color: white;
+}
+
+/* 更多页面 */
+.menu-list {
+  padding: 16px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 16px;
+  background: var(--card);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.menu-item:active {
+  background: var(--card2);
+  transform: scale(0.98);
+}
+.menu-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+.menu-info {
+  flex: 1;
+}
+.menu-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+.menu-desc {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 3px;
+}
+.menu-arrow {
+  color: var(--text3);
+  font-size: 20px;
+}
+
+/* 统计卡片 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 16px;
+}
+.stat-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+}
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.stat-label {
+  font-size: 13px;
+  color: var(--text2);
+  margin-top: 6px;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--text2);
+}
+.empty-state .icon {
+  font-size: 56px;
+  margin-bottom: 20px;
+}
+.empty-state h3 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+.empty-state p {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* 加载状态 */
+.loading {
+  text-align: center;
+  padding: 40px;
+}
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: calc(100px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-size: 15px;
+  z-index: 2000;
+  display: none;
+  box-shadow: 0 10px 40px var(--shadow);
+  backdrop-filter: blur(20px);
+  white-space: nowrap;
+}
+.toast.show {
+  display: block;
+  animation: toastIn 0.3s ease;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* 模态框 */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal.show {
+  display: flex;
+  animation: modalBgIn 0.2s ease;
+}
+@keyframes modalBgIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.modal-content {
+  background: var(--card);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 500px;
+  padding: 28px 20px;
+  padding-bottom: max(28px, var(--safe-bottom));
+  animation: modalSlideUp 0.3s ease;
+}
+@keyframes modalSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.modal-input {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  font-size: 16px;
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+}
+.modal-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.modal-input::placeholder {
+  color: var(--text3);
+}
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+.modal-btn {
+  flex: 1;
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.modal-btn:active {
+  transform: scale(0.98);
+}
+.modal-btn.primary {
+  background: var(--primary);
+  color: white;
+}
+.modal-btn.secondary {
+  background: var(--card2);
+  color: var(--text);
+}
+
+/* 回收站照片 */
+.trash-photo-item {
+  position: relative;
+}
+.trash-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  display: flex;
+  gap: 6px;
+}
+.trash-action-btn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.trash-action-btn.restore {
+  background: var(--primary);
+  color: white;
+}
+.trash-action-btn.delete {
+  background: var(--danger);
+  color: white;
+}
+
+/* 响应式 - 平板 */
+@media (min-width: 768px) {
+  .photo-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  .album-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .person-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* 响应式 - 桌面 */
+@media (min-width: 1024px) {
+  .photo-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+  .album-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .person-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* 暗黑模式滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text3);
+}
+
+/* 存储位置管理样式 */
+.storage-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+}
+.storage-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: var(--bg2);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+.storage-item:hover {
+    background: var(--card2);
+}
+.storage-item.active {
+    border-color: var(--primary);
+    background: rgba(108, 99, 255, 0.1);
+}
+.storage-item.add-new {
+    border-style: dashed;
+    border-color: var(--border);
+}
+.storage-item.add-new:hover {
+    border-color: var(--primary);
+}
+.storage-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: var(--card);
+    border-radius: 10px;
+}
+.storage-info {
+    flex: 1;
+}
+.storage-name {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.storage-path {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 2px;
+}
+.storage-stats {
+    font-size: 11px;
+    color: var(--text3);
+}
+.storage-badge {
+    background: var(--primary);
+    color: white;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 10px;
+}
+
+/* 文件浏览器样式 */
+.browse-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 10px;
+    background: var(--bg2);
+    border-radius: 10px;
+}
+.browse-back {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+}
+.browse-path {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.browse-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+}
+.browse-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+.browse-item:hover {
+    background: var(--card2);
+}
+.browse-icon {
+    font-size: 18px;
+}
+.browse-name {
+    font-size: 14px;
+}
+
+/* 表单样式 */
+.form-group {
+    margin-bottom: 16px;
+}
+.form-group label {
+    display: block;
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 6px;
+}
+
+/* 扫描结果样式 */
+.scan-result {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    background: var(--bg2);
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+.scan-stat {
+    flex: 1;
+    text-align: center;
+}
+.scan-value {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+}
+.scan-label {
+    font-size: 11px;
+    color: var(--text2);
+}
+
+/* 选中文件夹样式 */
+.selected-folder {
+    padding: 12px;
+    background: var(--bg2);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--text2);
+    word-break: break-all;
+}
+
+
+    /* upload progress */
+    .upload-progress-overlay {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 10000;
+      background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
+      padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .upload-progress-overlay.hidden { display: none; }
+    .upload-progress-text { color: #e2e8f0; font-size: 14px; }
+    .upload-progress-bar-outer { width: 300px; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden; }
+    .upload-progress-bar-inner { height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 4px; transition: width 0.3s; width: 0%; }
+    .upload-progress-cancel { background: #ef4444; color: #fff; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+
+  
+    /* Album delete button */
+    .album-card { position: relative; }
+    .album-delete-btn {
+      position: absolute; top: 8px; right: 8px; z-index: 10;
+      background: rgba(239, 68, 68, 0.9); color: #fff;
+      border: none; border-radius: 50%; width: 28px; height: 28px;
+      font-size: 14px; cursor: pointer; display: none;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .album-card:hover .album-delete-btn,
+    .album-card.show-delete .album-delete-btn { display: flex; }
+    .album-delete-btn:active { background: rgba(220, 38, 38, 1); transform: scale(0.9); }
+    
+    /* Context menu */
+    .context-menu {
+      position: fixed; z-index: 9999;
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 10px; padding: 6px 0;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      min-width: 160px;
+    }
+    .context-menu-item {
+      padding: 10px 16px; color: #e2e8f0; font-size: 14px;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+    }
+    .context-menu-item:active { background: #334155; }
+    .context-menu-item.danger { color: #ef4444; }
+    .context-menu-item.danger:active { background: rgba(239,68,68,0.15); }
+    .context-menu-divider { height: 1px; background: #334155; margin: 4px 0; }
+
+  </style>
+</head>
+<body>
+
+
+
+<!-- 主应用 -->
+<div class="app" id="app">
+  <!-- 顶部栏 -->
+  <div class="header">
+    <h1>壹米云相册</h1>
+    <div class="header-actions">
+      <button class="header-btn" id="searchBtn" title="搜索">🔍</button>
+      <button class="header-btn" id="selectBtn" title="选择">☑️</button>
+      <button class="header-btn" id="uploadBtn" title="上传">📤</button>
+    </div>
+  </div>
+
+  <!-- 搜索栏 -->
+  <div class="search-bar" id="searchBar">
+    <input type="text" id="searchInput" placeholder="搜索照片、人物、相册...">
+  </div>
+
+  <!-- 内容区域 -->
+  <div class="content" id="content">
+    <!-- 时间线页面 -->
+    <div class="page active" id="page-timeline">
+      <div class="timeline-header">
+        <h2>时间线</h2>
+      </div>
+      <div class="year-selector" id="yearSelector"></div>
+      <div id="timelineContent">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>加载中...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 相册页面 -->
+    <div class="page" id="page-albums">
+      <div class="album-header">
+        <h2>相册</h2>
+      </div>
+      <div style="padding: 0 16px 16px; display:flex; gap:8px;">
+        <button class="select-btn primary" style="flex:1;padding:14px;font-size:16px;background:linear-gradient(135deg,#6366f1,#8b5cf6)" onclick="showFolderBrowser()">📂 浏览硬盘</button>
+        <button class="select-btn primary" style="flex:1;padding:14px;font-size:16px" onclick="showNewAlbum()">+ 创建相册</button>
+      </div>
+      <div class="album-grid" id="albumGrid"></div>
+    </div>
+
+    <!-- 人物页面 -->
+    <div class="page" id="page-persons">
+      <div class="album-header">
+        <h2>人物</h2>
+      </div>
+      <div style="padding: 0 16px 16px;">
+        <button class="select-btn primary" style="width:100%;padding:14px;font-size:16px" onclick="showNewPerson()">+ 添加人物</button>
+      </div>
+      <div class="person-grid" id="personGrid"></div>
+    </div>
+
+    <!-- 收藏页面 -->
+    <div class="page" id="page-favorites">
+      <div class="favorites-header">
+        <span class="icon">❤️</span>
+        <h2>收藏</h2>
+      </div>
+      <div id="favoritesContent">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>加载中...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 更多页面 -->
+    <div class="page" id="page-more">
+      <div class="album-header">
+        <h2>更多</h2>
+      </div>
+      <div class="menu-list">
+        <div class="menu-item" onclick="showStats()">
+          <div class="menu-icon">📊</div>
+          <div class="menu-info">
+            <div class="menu-title">存储统计</div>
+            <div class="menu-desc">查看照片数量和存储空间</div>
+          </div>
+          <span class="menu-arrow">›</span>
+        </div>
+        <div class="menu-item" onclick="showTrash()">
+          <div class="menu-icon">🗑️</div>
+          <div class="menu-info">
+            <div class="menu-title">回收站</div>
+            <div class="menu-desc">查看已删除的照片</div>
+          </div>
+          <span class="menu-arrow">›</span>
+        </div>
+        <div class="menu-item" onclick="showStorageModal()">
+          <div class="menu-icon">💾</div>
+          <div class="menu-info">
+            <div class="menu-title">存储位置</div>
+            <div class="menu-desc">管理照片存储位置</div>
+          </div>
+          <span class="menu-arrow">›</span>
+        </div>
+        <div class="menu-item" onclick="showFolderAlbumModal()">
+          <div class="menu-icon">📂</div>
+          <div class="menu-info">
+            <div class="menu-title">文件夹相册</div>
+            <div class="menu-desc">从文件夹创建相册</div>
+          </div>
+          <span class="menu-arrow">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 回收站页面 -->
+    <div class="page" id="page-trash">
+      <div class="trash-header">
+        <button class="header-btn" onclick="switchNav('more')" style="background:transparent;border:none;font-size:24px">←</button>
+        <h2>回收站</h2>
+        <button class="trash-btn danger" onclick="emptyTrash()">清空</button>
+      </div>
+      <div id="trashContent">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>加载中...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 统计页面 -->
+    <div class="page" id="page-stats">
+      <div class="trash-header">
+        <button class="header-btn" onclick="switchNav('more')" style="background:transparent;border:none;font-size:24px">←</button>
+        <h2>存储统计</h2>
+        <div></div>
+      </div>
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+  </div>
+
+  <!-- 选择模式底部栏 -->
+  <div class="select-bar" id="selectBar">
+    <span class="count">已选择 <b id="selectCount">0</b> 项</span>
+    <div class="select-actions">
+      <button class="select-btn ghost" onclick="selectAll()">全选</button>
+      <button class="select-btn primary" onclick="batchFavorite()">收藏</button>
+      <button class="select-btn danger" onclick="batchDelete()">删除</button>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-page="timeline" onclick="switchNav('timeline')">
+      <span class="icon">🕐</span>
+      <span>时间线</span>
+    </div>
+    <div class="nav-item" data-page="albums" onclick="switchNav('albums')">
+      <span class="icon">📁</span>
+      <span>相册</span>
+    </div>
+    <div class="nav-item" data-page="persons" onclick="switchNav('persons')">
+      <span class="icon">👤</span>
+      <span>人物</span>
+    </div>
+    <div class="nav-item" data-page="favorites" onclick="switchNav('favorites')">
+      <span class="icon">❤️</span>
+      <span>收藏</span>
+    </div>
+    <div class="nav-item" data-page="more" onclick="switchNav('more')">
+      <span class="icon">⋯</span>
+      <span>更多</span>
+    </div>
+  </div>
+</div>
+
+<!-- 灯箱 -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-header">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <div class="lightbox-actions">
+      <button class="lightbox-btn" id="lbFavBtn" onclick="toggleFav()">♡</button>
+      <button class="lightbox-btn" onclick="showDetail()">ℹ️</button>
+      <button class="lightbox-btn" onclick="downloadPhoto()">⬇️</button>
+      <button class="lightbox-btn" onclick="deletePhoto()">🗑️</button>
+    </div>
+  </div>
+  <div class="lightbox-content" id="lightboxContent">
+    <button class="lightbox-nav prev" onclick="navLightbox(-1)">‹</button>
+    <div id="lightboxMedia"></div>
+    <button class="lightbox-nav next" onclick="navLightbox(1)">›</button>
+  </div>
+  <div class="lightbox-info">
+    <div class="name" id="lbName"></div>
+    <div class="meta" id="lbMeta"></div>
+  </div>
+  <div class="detail-panel" id="detailPanel">
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+    <!-- upload progress bar -->
+    <div class="upload-progress-overlay hidden" id="uploadProgress">
+      <div class="upload-progress-text" id="uploadProgressText">准备上传...</div>
+      <div class="upload-progress-bar-outer">
+        <div class="upload-progress-bar-inner" id="uploadProgressBar"></div>
+      </div>
+      <button class="upload-progress-cancel" id="uploadCancelBtn" onclick="cancelUpload()">取消</button>
+    </div>
+    <!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 新建相册模态框 -->
+<div class="modal" id="newAlbumModal">
+  <div class="modal-content">
+    <div class="modal-title">创建相册</div>
+    <input class="modal-input" id="albumNameInput" placeholder="相册名称">
+    <input class="modal-input" id="albumDescInput" placeholder="相册描述（可选）">
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="hideModal('newAlbumModal')">取消</button>
+      <button class="modal-btn primary" onclick="createAlbum()">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新建人物模态框 -->
+<div class="modal" id="newPersonModal">
+  <div class="modal-content">
+    <div class="modal-title">添加人物</div>
+    <input class="modal-input" id="personNameInput" placeholder="人物名称">
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="hideModal('newPersonModal')">取消</button>
+      <button class="modal-btn primary" onclick="createPerson()">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 文件上传 input -->
+<input type="file" id="fileInput" multiple accept="image/*,video/*" style="display:none">
+
+<script>
+// ============ 全局状态 ============
+let currentPage = 'timeline';
+let currentYear = '';
+let timelineData = [];
+let currentPhotos = [];
+let currentPhotoIndex = -1;
+let selectMode = false;
+let selectedIds = new Set();
+let touchStartX = 0;
+let touchStartY = 0;
+
+// ============ 工具函数 ============
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+function toast(msg, duration = 2000) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function showModal(id) {
+  document.getElementById(id).classList.add('show');
+}
+
+function hideModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+function authFetch(url, opts = {}) {
+  return fetch(url, opts);
+}
+
+// ============ 初始化 ============
+function init() {
+  loadTimeline();
+  setupEventListeners();
+}
+
+function setupEventListeners() {
+  // 搜索
+  $('#searchBtn').addEventListener('click', () => {
+    $('#searchBar').classList.toggle('show');
+    if ($('#searchBar').classList.contains('show')) {
+      $('#searchInput').focus();
+    } else {
+      $('#searchInput').value = '';
+    }
+  });
+  
+  $('#searchInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      performSearch($('#searchInput').value.trim());
+    }
+  });
+  
+  // 选择模式
+  $('#selectBtn').addEventListener('click', toggleSelectMode);
+  
+  // 上传
+  $('#uploadBtn').addEventListener('click', () => $('#fileInput').click());
+  $('#fileInput').addEventListener('change', handleUpload);
+  
+  // 灯箱触摸事件
+  const lbContent = $('#lightboxContent');
+  lbContent.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  
+  lbContent.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    
+    // 只有水平滑动大于垂直滑动时才切换
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      navLightbox(dx > 0 ? -1 : 1);
+    }
+  });
+  
+  // 灯箱键盘事件
+  document.addEventListener('keydown', e => {
+    if (!$('#lightbox').classList.contains('show')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') navLightbox(-1);
+    if (e.key === 'ArrowRight') navLightbox(1);
+  });
+  
+  // 点击详情面板外部关闭
+  $('#lightbox').addEventListener('click', e => {
+    if (e.target === $('#lightbox') || e.target === $('#lightboxMedia')) {
+      $('#detailPanel').classList.remove('show');
+    }
+  });
+}
+
+// 立即初始化
+init();
+
+// ============ 导航 ============
+let _pageAbortController = null;
+
+function switchNav(page) {
+  if (currentPage === page) return;  // 防止重复切换
+  currentPage = page;
+  
+  // 取消上一个页面的未完成请求
+  if (_pageAbortController) {
+    _pageAbortController.abort();
+  }
+  _pageAbortController = new AbortController();
+  
+  // 退出选择模式
+  if (selectMode) {
+    toggleSelectMode();
+  }
+  
+  // 更新导航项
+  $$('.nav-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.page === page);
+  });
+  
+  // 更新页面
+  $$('.page').forEach(p => p.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
+  
+  // 滚动到顶部
+  $('#content').scrollTop = 0;
+  
+  // 加载数据
+  switch (page) {
+    case 'timeline': loadTimeline(); break;
+    case 'albums': loadAlbums(); break;
+    case 'persons': loadPersons(); break;
+    case 'favorites': loadFavorites(); break;
+    case 'trash': loadTrash(); break;
+    case 'stats': loadStats(); break;
+  }
+}
+
+// ============ 时间线 ============
+async function loadTimeline() {
+  try {
+    const url = currentYear ? `/api/timeline?year=${currentYear}` : '/api/timeline';
+    const r = await authFetch(url, { signal: _pageAbortController?.signal });
+    const d = await r.json();
+    
+    // 检查是否还在时间线页面
+    if (currentPage !== 'timeline') return;
+    
+    renderYearSelector(d.years);
+    timelineData = d.timeline;
+    renderTimeline();
+  } catch (e) {
+    if (e.name === 'AbortError') return;  // 被取消，忽略
+    console.error('加载时间线失败:', e);
+  }
+}
+
+function renderYearSelector(years) {
+  const html = `
+    <button class="year-btn ${!currentYear ? 'active' : ''}" onclick="selectYear('')">全部</button>
+    ${years.map(y => `
+      <button class="year-btn ${currentYear === y.year ? 'active' : ''}" onclick="selectYear('${y.year}')">
+        ${y.year} (${y.count})
+      </button>
+    `).join('')}
+  `;
+  $('#yearSelector').innerHTML = html;
+}
+
+function selectYear(year) {
+  currentYear = year;
+  loadTimeline();
+}
+
+function renderTimeline() {
+  const container = $('#timelineContent');
+  
+  if (timelineData.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📷</div>
+        <h3>还没有照片</h3>
+        <p>点击右上角上传按钮开始备份</p>
+      </div>
+    `;
+    return;
+  }
+  
+  let html = '';
+  timelineData.forEach(group => {
+    const date = new Date(group.date);
+    const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+    
+    html += `
+      <div class="date-group">
+        <div class="date-header">
+          <span>${dateStr}</span>
+          <span class="count">${group.count} 张</span>
+        </div>
+        <div class="photo-grid" data-date="${group.date}" data-loaded="false"></div>
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+  
+  // 用 IntersectionObserver 懒加载：只加载可见区域的照片
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const grid = entry.target;
+        if (grid.dataset.loaded === 'false') {
+          grid.dataset.loaded = 'true';
+          loadDatePhotos(grid.dataset.date);
+        }
+        observer.unobserve(grid);
+      }
+    });
+  }, { rootMargin: '200px' });  // 提前200px开始加载
+  
+  $$('.photo-grid').forEach(grid => observer.observe(grid));
+}
+
+async function loadDatePhotos(date) {
+  try {
+    const r = await authFetch(`/api/timeline/${date}`);
+    const d = await r.json();
+    
+    const grid = document.querySelector(`.photo-grid[data-date="${date}"]`);
+    if (!grid) return;
+    
+    grid.innerHTML = d.photos.map((p, i) => renderPhotoItem(p, i)).join('');
+  } catch (e) {
+    console.error('加载日期照片失败:', e);
+  }
+}
+
+function renderPhotoItem(photo, index) {
+  const isVideo = photo.media_type === 'video';
+  const isFav = photo.is_favorite;
+  const isSelected = selectedIds.has(photo.id);
+  
+  return `
+    <div class="photo-item ${isSelected ? 'selected' : ''}" 
+         data-id="${photo.id}" 
+         onclick="handlePhotoClick(${photo.id})">
+      ${isFav ? '<span class="fav-badge">❤️</span>' : ''}
+      <img src="${photo.thumb_url || photo.photo_url}" loading="lazy" alt="">
+      ${isVideo ? '<span class="video-badge">▶</span>' : ''}
+      <div class="select-badge">✓</div>
+    </div>
+  `;
+}
+
+function handlePhotoClick(id) {
+  if (selectMode) {
+    toggleSelect(id);
+    return;
+  }
+  
+  // 收集当前可见的所有照片
+  const allPhotos = [];
+  $$('.photo-item').forEach(item => {
+    const pid = parseInt(item.dataset.id);
+    if (pid) allPhotos.push({ id: pid });
+  });
+  
+  const index = allPhotos.findIndex(p => p.id === id);
+  if (index >= 0) {
+    openLightbox(allPhotos, index);
+  }
+}
+
+// ============ 灯箱 ============
+async function openLightbox(photos, index) {
+  currentPhotos = photos;
+  currentPhotoIndex = index;
+  
+  await renderLightboxPhoto();
+  $('#lightbox').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+async function renderLightboxPhoto() {
+  const photo = currentPhotos[currentPhotoIndex];
+  if (!photo) return;
+  
+  try {
+    const r = await authFetch(`/api/photo/${photo.id}`);
+    const data = await r.json();
+    
+    const media = $('#lightboxMedia');
+    if (data.media_type === 'video') {
+      // Show video player directly with poster
+      const posterUrl = data.preview_url || data.thumb_url || '';
+      media.innerHTML = `
+        <video src="${data.photo_url}" controls autoplay playsinline
+               poster="${posterUrl}"
+               style="max-width:100%;max-height:100%"
+               onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div style=\\'color:#fff;padding:20px\\'>视频加载失败</div>')">
+        </video>`;
+    } else {
+      media.innerHTML = `<img src="${data.preview_url || data.photo_url}" style="max-width:100%;max-height:100%">`;
+    }
+    
+    $('#lbName').textContent = data.original_name;
+    $('#lbMeta').textContent = `${data.file_size_fmt} · ${data.taken_at || ''}`;
+    $('#lbFavBtn').textContent = data.is_favorite ? '❤️' : '♡';
+    $('#lbFavBtn').classList.toggle('active', data.is_favorite);
+    
+    // 存储详情数据
+    currentPhotos[currentPhotoIndex] = data;
+  } catch (e) {
+    console.error('加载照片详情失败:', e);
+  }
+}
+
+function closeLightbox() {
+  $('#lightbox').classList.remove('show');
+  $('#detailPanel').classList.remove('show');
+  document.body.style.overflow = '';
+  
+  const video = $('#lightboxMedia video');
+  if (video) video.pause();
+}
+
+function navLightbox(dir) {
+  const newIndex = currentPhotoIndex + dir;
+  if (newIndex >= 0 && newIndex < currentPhotos.length) {
+    currentPhotoIndex = newIndex;
+    renderLightboxPhoto();
+  }
+}
+
+async function toggleFav() {
+  const photo = currentPhotos[currentPhotoIndex];
+  if (!photo) return;
+  
+  try {
+    const r = await authFetch(`/api/photo/${photo.id}/favorite`, { method: 'POST' });
+    const d = await r.json();
+    
+    photo.is_favorite = d.is_favorite;
+    $('#lbFavBtn').textContent = d.is_favorite ? '❤️' : '♡';
+    $('#lbFavBtn').classList.toggle('active', d.is_favorite);
+    toast(d.is_favorite ? '已收藏' : '已取消收藏');
+  } catch (e) {
+    toast('操作失败');
+  }
+}
+
+function showDetail() {
+  const panel = $('#detailPanel');
+  panel.classList.toggle('show');
+  
+  const photo = currentPhotos[currentPhotoIndex];
+  if (!photo) return;
+  
+  let html = '';
+  html += `<div class="detail-row"><span class="detail-label">文件名</span><span class="detail-value">${photo.original_name}</span></div>`;
+  html += `<div class="detail-row"><span class="detail-label">大小</span><span class="detail-value">${photo.file_size_fmt}</span></div>`;
+  html += `<div class="detail-row"><span class="detail-label">类型</span><span class="detail-value">${photo.media_type === 'video' ? '视频' : '照片'}</span></div>`;
+  if (photo.width) {
+    html += `<div class="detail-row"><span class="detail-label">尺寸</span><span class="detail-value">${photo.width} × ${photo.height}</span></div>`;
+  }
+  if (photo.taken_at) {
+    html += `<div class="detail-row"><span class="detail-label">拍摄时间</span><span class="detail-value">${photo.taken_at}</span></div>`;
+  }
+  if (photo.tags && photo.tags.length > 0) {
+    html += `<div class="detail-row"><span class="detail-label">标签</span><span class="detail-value">${photo.tags.join(', ')}</span></div>`;
+  }
+  
+  $('#detailContent').innerHTML = html;
+}
+
+function downloadPhoto() {
+  const photo = currentPhotos[currentPhotoIndex];
+  if (!photo) return;
+  
+  const a = document.createElement('a');
+  a.href = `/api/download/${photo.id}`;
+  a.download = photo.original_name;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+async function deletePhoto() {
+  if (!confirm('确定要删除这张照片吗？')) return;
+  
+  const photo = currentPhotos[currentPhotoIndex];
+  if (!photo) return;
+  
+  try {
+    await authFetch(`/api/photo/${photo.id}`, { method: 'DELETE' });
+    toast('已移到回收站');
+    closeLightbox();
+    refreshCurrentPage();
+  } catch (e) {
+    toast('删除失败');
+  }
+}
+
+// ============ 选择模式 ============
+function toggleSelectMode() {
+  selectMode = !selectMode;
+  selectedIds.clear();
+  
+  document.body.classList.toggle('select-mode', selectMode);
+  $('#selectBar').classList.toggle('show', selectMode);
+  $('#selectBtn').classList.toggle('active', selectMode);
+  
+  updateSelectCount();
+}
+
+function toggleSelect(id) {
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id);
+  } else {
+    selectedIds.add(id);
+  }
+  
+  const item = document.querySelector(`.photo-item[data-id="${id}"]`);
+  if (item) item.classList.toggle('selected', selectedIds.has(id));
+  
+  updateSelectCount();
+}
+
+function selectAll() {
+  $$('.photo-item').forEach(item => {
+    const id = parseInt(item.dataset.id);
+    selectedIds.add(id);
+    item.classList.add('selected');
+  });
+  updateSelectCount();
+}
+
+function updateSelectCount() {
+  $('#selectCount').textContent = selectedIds.size;
+}
+
+async function batchFavorite() {
+  if (selectedIds.size === 0) return;
+  
+  try {
+    await authFetch('/api/batch/favorite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photo_ids: Array.from(selectedIds), favorite: true })
+    });
+    toast(`已收藏 ${selectedIds.size} 张照片`);
+    toggleSelectMode();
+    refreshCurrentPage();
+  } catch (e) {
+    toast('操作失败');
+  }
+}
+
+async function batchDelete() {
+  if (selectedIds.size === 0) return;
+  if (!confirm(`确定要删除 ${selectedIds.size} 张照片吗？`)) return;
+  
+  try {
+    await authFetch('/api/batch/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photo_ids: Array.from(selectedIds) })
+    });
+    toast(`已删除 ${selectedIds.size} 张照片`);
+    toggleSelectMode();
+    refreshCurrentPage();
+  } catch (e) {
+    toast('删除失败');
+  }
+}
+
+// ============ 相册 ============
+async function loadAlbums() {
+  try {
+    const r = await authFetch('/api/albums');
+    const d = await r.json();
+    renderAlbums(d.albums);
+  } catch (e) {
+    console.error('加载相册失败:', e);
+  }
+}
+
+function renderAlbums(albums) {
+  const grid = $('#albumGrid');
+  
+  if (albums.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1/-1">
+        <div class="icon">📁</div>
+        <h3>还没有相册</h3>
+        <p>点击上方按钮创建第一个相册</p>
+      </div>
+    `;
+    return;
+  }
+  
+  grid.innerHTML = albums.map(album => `
+    <div class="album-card" onclick="openAlbum(${album.id})" oncontextmenu="showAlbumMenu(event, ${album.id}, '${album.name.replace(/'/g, "\'")}')">
+      <button class="album-delete-btn" onclick="event.stopPropagation(); deleteAlbum(${album.id}, '${album.name.replace(/'/g, "\'")}')" title="删除相册">✕</button>
+      <div class="album-cover">
+        ${album.cover ? `<img src="${album.cover.thumb_url || album.cover.photo_url}" loading="lazy">` : '<div class="placeholder">📁</div>'}
+      </div>
+      <div class="album-info">
+        <div class="album-name">${album.name}</div>
+        <div class="album-count">${album.photo_count} 张照片</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showAlbumMenu(e, albumId, albumName) {
+  e.preventDefault();
+  e.stopPropagation();
+  closeContextMenu();
+  
+  const menu = document.createElement('div');
+  menu.className = 'context-menu';
+  menu.id = 'contextMenu';
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - 120) + 'px';
+  
+  menu.innerHTML = `
+    <div class="context-menu-item" onclick="openAlbum(${albumId}); closeContextMenu();">📂 打开相册</div>
+    <div class="context-menu-item" onclick="renameAlbum(${albumId}, '${albumName.replace(/'/g, "\'")}'); closeContextMenu();">✏️ 重命名</div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item danger" onclick="deleteAlbum(${albumId}, '${albumName.replace(/'/g, "\'")}'); closeContextMenu();">🗑️ 删除相册</div>
+  `;
+  
+  document.body.appendChild(menu);
+  
+  // 点击其他地方关闭
+  setTimeout(() => {
+    document.addEventListener('click', closeContextMenu, { once: true });
+  }, 10);
+}
+
+function closeContextMenu() {
+  const menu = document.getElementById('contextMenu');
+  if (menu) menu.remove();
+}
+
+async function deleteAlbum(id, name) {
+  if (!confirm(`确定删除相册「${name}」？\n相册中的照片不会被删除。`)) return;
+  
+  try {
+    await authFetch(`/api/albums/${id}`, { method: 'DELETE' });
+    toast('相册已删除');
+    loadAlbums();
+  } catch (e) {
+    toast('删除失败');
+  }
+}
+
+async function renameAlbum(id, oldName) {
+  const newName = prompt('输入新名称:', oldName);
+  if (!newName || newName === oldName) return;
+  
+  try {
+    await authFetch(`/api/albums/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newName })
+    });
+    toast('重命名成功');
+    loadAlbums();
+  } catch (e) {
+    toast('重命名失败');
+  }
+}
+
+function showNewAlbum() {
+  $('#albumNameInput').value = '';
+  $('#albumDescInput').value = '';
+  showModal('newAlbumModal');
+}
+
+async function createAlbum() {
+  const name = $('#albumNameInput').value.trim();
+  const desc = $('#albumDescInput').value.trim();
+  
+  if (!name) {
+    toast('请输入相册名称');
+    return;
+  }
+  
+  try {
+    await authFetch('/api/albums', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, description: desc })
+    });
+    hideModal('newAlbumModal');
+    toast('相册创建成功');
+    loadAlbums();
+  } catch (e) {
+    toast('创建失败');
+  }
+}
+
+async function openAlbum(id) {
+  try {
+    const r = await authFetch(`/api/albums/${id}`);
+    const d = await r.json();
+    
+    currentPhotos = d.photos;
+    if (d.photos.length > 0) {
+      openLightbox(d.photos, 0);
+    } else {
+      toast('相册是空的');
+    }
+  } catch (e) {
+    toast('加载失败');
+  }
+}
+
+// ============ 人物 ============
+async function loadPersons() {
+  try {
+    const r = await authFetch('/api/persons');
+    const d = await r.json();
+    renderPersons(d.persons);
+  } catch (e) {
+    console.error('加载人物失败:', e);
+  }
+}
+
+function renderPersons(persons) {
+  const grid = $('#personGrid');
+  
+  if (persons.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1/-1">
+        <div class="icon">👤</div>
+        <h3>还没有人物</h3>
+        <p>点击上方按钮添加人物</p>
+      </div>
+    `;
+    return;
+  }
+  
+  grid.innerHTML = persons.map(person => `
+    <div class="person-card" onclick="openPerson(${person.id})">
+      <div class="person-avatar">
+        ${person.cover ? `<img src="${person.cover.thumb_url || person.cover.photo_url}" loading="lazy">` : '<div class="placeholder">👤</div>'}
+      </div>
+      <div class="person-name">${person.name}</div>
+      <div class="person-count">${person.photo_count} 张</div>
+    </div>
+  `).join('');
+}
+
+function showNewPerson() {
+  $('#personNameInput').value = '';
+  showModal('newPersonModal');
+}
+
+async function createPerson() {
+  const name = $('#personNameInput').value.trim();
+  
+  if (!name) {
+    toast('请输入人物名称');
+    return;
+  }
+  
+  try {
+    await authFetch('/api/persons', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    hideModal('newPersonModal');
+    toast('人物添加成功');
+    loadPersons();
+  } catch (e) {
+    toast('添加失败');
+  }
+}
+
+async function openPerson(id) {
+  try {
+    const r = await authFetch(`/api/persons/${id}`);
+    const d = await r.json();
+    
+    currentPhotos = d.photos;
+    if (d.photos.length > 0) {
+      openLightbox(d.photos, 0);
+    } else {
+      toast('该人物还没有照片');
+    }
+  } catch (e) {
+    toast('加载失败');
+  }
+}
+
+// ============ 收藏 ============
+async function loadFavorites() {
+  try {
+    const r = await authFetch('/api/photos?favorite=1&per_page=100');
+    const d = await r.json();
+    
+    const container = $('#favoritesContent');
+    
+    if (d.photos.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">❤️</div>
+          <h3>还没有收藏</h3>
+          <p>在照片预览中点击爱心按钮收藏</p>
+        </div>
+      `;
+      return;
+    }
+    
+    container.innerHTML = `
+      <div class="photo-grid">
+        ${d.photos.map((p, i) => renderPhotoItem(p, i)).join('')}
+      </div>
+    `;
+  } catch (e) {
+    console.error('加载收藏失败:', e);
+  }
+}
+
+// ============ 回收站 ============
+async function loadTrash() {
+  try {
+    const r = await authFetch('/api/trash');
+    const d = await r.json();
+    
+    const container = $('#trashContent');
+    
+    if (d.photos.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🗑️</div>
+          <h3>回收站是空的</h3>
+          <p>删除的照片会移到这里</p>
+        </div>
+      `;
+      return;
+    }
+    
+    container.innerHTML = `
+      <div class="photo-grid">
+        ${d.photos.map(p => `
+          <div class="photo-item trash-photo-item" data-id="${p.id}">
+            <img src="${p.thumb_url || p.photo_url}" loading="lazy">
+            <div class="trash-actions">
+              <button class="trash-action-btn restore" onclick="event.stopPropagation();restorePhoto(${p.id})">恢复</button>
+              <button class="trash-action-btn delete" onclick="event.stopPropagation();permanentDelete(${p.id})">删除</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch (e) {
+    console.error('加载回收站失败:', e);
+  }
+}
+
+async function restorePhoto(id) {
+  try {
+    await authFetch(`/api/photo/${id}/restore`, { method: 'POST' });
+    toast('已恢复');
+    loadTrash();
+  } catch (e) {
+    toast('恢复失败');
+  }
+}
+
+async function permanentDelete(id) {
+  if (!confirm('确定要永久删除吗？此操作不可恢复！')) return;
+  
+  try {
+    await authFetch(`/api/trash/${id}`, { method: 'DELETE' });
+    toast('已永久删除');
+    loadTrash();
+  } catch (e) {
+    toast('删除失败');
+  }
+}
+
+async function emptyTrash() {
+  if (!confirm('确定要清空回收站吗？此操作不可恢复！')) return;
+  
+  try {
+    const r = await authFetch('/api/trash/empty', { method: 'POST' });
+    const d = await r.json();
+    toast(`已清空 ${d.deleted} 张照片`);
+    loadTrash();
+  } catch (e) {
+    toast('清空失败');
+  }
+}
+
+// ============ 统计 ============
+async function loadStats() {
+  try {
+    const r = await authFetch('/api/stats');
+    const d = await r.json();
+    
+    $('#statsGrid').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-value">${d.total}</div>
+        <div class="stat-label">总照片</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${d.photos}</div>
+        <div class="stat-label">照片</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${d.videos}</div>
+        <div class="stat-label">视频</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${d.total_size}</div>
+        <div class="stat-label">存储空间</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${d.favorites}</div>
+        <div class="stat-label">收藏</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${d.persons}</div>
+        <div class="stat-label">人物</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${d.albums}</div>
+        <div class="stat-label">相册</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${d.trash}</div>
+        <div class="stat-label">回收站</div>
+      </div>
+    `;
+  } catch (e) {
+    console.error('加载统计失败:', e);
+  }
+}
+
+// ============ 搜索 ============
+async function performSearch(query) {
+  if (!query) return;
+  
+  try {
+    const r = await authFetch(`/api/search?q=${encodeURIComponent(query)}`);
+    const d = await r.json();
+    
+    if (d.photos.length > 0) {
+      currentPhotos = d.photos;
+      openLightbox(d.photos, 0);
+    } else {
+      toast('没有找到相关照片');
+    }
+  } catch (e) {
+    toast('搜索失败');
+  }
+}
+
+// ============ 上传 ============
+let uploadXHR = null;
+
+function cancelUpload() {
+  if (uploadXHR) { uploadXHR.abort(); uploadXHR = null; }
+  hideUploadProgress();
+  toast('已取消上传');
+}
+
+function showUploadProgress(text) {
+  const el = document.getElementById('uploadProgress');
+  el.classList.remove('hidden');
+  document.getElementById('uploadProgressText').textContent = text;
+  document.getElementById('uploadProgressBar').style.width = '0%';
+}
+
+function updateUploadProgress(pct) {
+  document.getElementById('uploadProgressBar').style.width = pct + '%';
+  document.getElementById('uploadProgressText').textContent = '上传中... ' + pct + '%';
+}
+
+function hideUploadProgress() {
+  document.getElementById('uploadProgress').classList.add('hidden');
+}
+
+async function handleUpload(e) {
+  const files = e.target.files;
+  if (files.length === 0) return;
+  
+  let totalSize = 0;
+  for (let i = 0; i < files.length; i++) totalSize += files[i].size;
+  
+  const formData = new FormData();
+  for (let i = 0; i < files.length; i++) {
+    formData.append('photos', files[i]);
+  }
+  
+  showUploadProgress('准备上传 ' + files.length + ' 个文件 (' + formatFileSize(totalSize) + ')');
+  
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      uploadXHR = xhr;
+      
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          updateUploadProgress(pct);
+        }
+      });
+      
+      xhr.addEventListener('load', () => {
+        uploadXHR = null;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try { resolve(JSON.parse(xhr.responseText)); }
+          catch(err) { reject(new Error('解析响应失败')); }
+        } else {
+          reject(new Error('上传失败: HTTP ' + xhr.status));
+        }
+      });
+      
+      xhr.addEventListener('error', () => { uploadXHR = null; reject(new Error('网络错误')); });
+      xhr.addEventListener('abort', () => { uploadXHR = null; reject(new Error('已取消')); });
+      
+      xhr.open('POST', '/api/upload');
+      xhr.send(formData);
+    });
+    
+    hideUploadProgress();
+    
+    let ok = 0, dup = 0, fail = 0;
+    if (result.results) {
+      result.results.forEach(r => {
+        if (r.status === 'ok') ok++;
+        else if (r.status === 'duplicate') dup++;
+        else fail++;
+      });
+    }
+    
+    let msg = '上传完成：' + ok + ' 张';
+    if (dup > 0) msg += '，' + dup + ' 张重复';
+    if (fail > 0) msg += '，' + fail + ' 张失败';
+    toast(msg);
+    refreshCurrentPage();
+  } catch (err) {
+    hideUploadProgress();
+    if (err.message !== '已取消') toast('上传失败：' + err.message);
+  }
+  
+  e.target.value = '';
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  if (bytes < 1024*1024*1024) return (bytes/1024/1024).toFixed(1) + ' MB';
+  return (bytes/1024/1024/1024).toFixed(1) + ' GB';
+}
+
+// ============ 刷新当前页面 ============
+function refreshCurrentPage() {
+  switch (currentPage) {
+    case 'timeline': loadTimeline(); break;
+    case 'albums': loadAlbums(); break;
+    case 'persons': loadPersons(); break;
+    case 'favorites': loadFavorites(); break;
+    case 'trash': loadTrash(); break;
+  }
+}
+
+function showStats() {
+  switchNav('stats');
+}
+
+function showTrash() {
+  switchNav('trash');
+}
+
+// ============ 存储位置管理 ============
+async function loadStorageLocations() {
+    try {
+        const r = await fetch('/api/storage/locations');
+        const d = await r.json();
+        renderStorageLocations(d.locations, d.current);
+    } catch (e) {
+        console.error('加载存储位置失败:', e);
+    }
+}
+
+function renderStorageLocations(locations, current) {
+    const container = document.getElementById('storageLocations');
+    if (!container) return;
+    
+    container.innerHTML = locations.map((loc, index) => `
+        <div class="storage-item ${loc.active ? 'active' : ''}" onclick="selectStorage('${loc.path}')">
+            <div class="storage-icon">${loc.active ? '✅' : '📁'}</div>
+            <div class="storage-info">
+                <div class="storage-name">${loc.name}</div>
+                <div class="storage-path">${loc.path}</div>
+                <div class="storage-stats">
+                    ${loc.exists ? `${loc.total_count} 个文件` : '路径不存在'}
+                </div>
+            </div>
+            ${loc.active ? '<span class="storage-badge">当前</span>' : ''}
+        </div>
+    `).join('');
+    
+    // 添加添加新位置按钮
+    container.innerHTML += `
+        <div class="storage-item add-new" onclick="showAddStorage()">
+            <div class="storage-icon">➕</div>
+            <div class="storage-info">
+                <div class="storage-name">添加新位置</div>
+                <div class="storage-path">添加 iStoreOS 中的其他文件夹</div>
+            </div>
+        </div>
+    `;
+}
+
+function selectStorage(path) {
+    if (confirm('切换存储位置需要重启容器，确定继续吗？')) {
+        fetch('/api/storage/switch', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({path: path})
+        }).then(r => r.json()).then(d => {
+            if (d.ok) {
+                toast('存储位置已切换，容器将重启...');
+                setTimeout(() => location.reload(), 3000);
+            } else {
+                toast(d.error || '切换失败');
+            }
+        });
+    }
+}
+
+function showAddStorage() {
+    document.getElementById('addStorageModal').classList.add('show');
+    browsePath('/mnt');
+}
+
+async function browsePath(path) {
+    try {
+        const r = await authFetch(`/api/storage/browse?path=${encodeURIComponent(path)}`);
+        const d = await r.json();
+        
+        document.getElementById('currentBrowsePath').textContent = d.path;
+        document.getElementById('browseParent').onclick = d.parent ? () => browsePath(d.parent) : null;
+        
+        const list = document.getElementById('browseList');
+        list.innerHTML = d.items.filter(item => item.is_dir).map(item => `
+            <div class="browse-item" onclick="browsePath('${item.path}')">
+                <span class="browse-icon">📁</span>
+                <span class="browse-name">${item.name}</span>
+            </div>
+        `).join('');
+        
+        document.getElementById('selectedPath').value = d.path;
+    } catch (e) {
+        toast('浏览失败');
+    }
+}
+
+async function addStorageLocation() {
+    const path = document.getElementById('selectedPath').value;
+    const name = document.getElementById('storageName').value.trim() || path.split('/').pop();
+    
+    if (!path) {
+        toast('请选择路径');
+        return;
+    }
+    
+    try {
+        const r = await fetch('/api/storage/locations', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({path, name})
+        });
+        const d = await r.json();
+        
+        if (d.ok) {
+            toast('存储位置已添加');
+            hideModal('addStorageModal');
+            loadStorageLocations();
+        } else {
+            toast(d.error || '添加失败');
+        }
+    } catch (e) {
+        toast('添加失败');
+    }
+}
+
+// ============ 文件夹映射相册 ============
+async function scanFolder(path) {
+    try {
+        const r = await authFetch(`/api/folders/scan?path=${encodeURIComponent(path)}`);
+        const d = await r.json();
+        
+        document.getElementById('folderScanResult').innerHTML = `
+            <div class="scan-result">
+                <div class="scan-stat">
+                    <span class="scan-value">${d.photos}</span>
+                    <span class="scan-label">照片</span>
+                </div>
+                <div class="scan-stat">
+                    <span class="scan-value">${d.videos}</span>
+                    <span class="scan-label">视频</span>
+                </div>
+                <div class="scan-stat">
+                    <span class="scan-value">${d.total_size}</span>
+                    <span class="scan-label">大小</span>
+                </div>
+            </div>
+        `;
+        
+        return d;
+    } catch (e) {
+        toast('扫描失败');
+        return null;
+    }
+}
+
+async function createFolderAlbum() {
+    const folderPath = document.getElementById('folderAlbumPath').value;
+    const albumName = document.getElementById('folderAlbumName').value.trim();
+    const description = document.getElementById('folderAlbumDesc').value.trim();
+    
+    if (!folderPath) {
+        toast('请选择文件夹');
+        return;
+    }
+    
+    if (!albumName) {
+        toast('请输入相册名称');
+        return;
+    }
+    
+    try {
+        toast('正在创建相册并导入照片...');
+        const r = await authFetch('/api/albums/folder', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                folder_path: folderPath,
+                name: albumName,
+                description: description
+            })
+        });
+        const d = await r.json();
+        
+        if (d.ok) {
+            toast(`相册创建成功，导入了 ${d.added} 张照片`);
+            hideModal('folderAlbumModal');
+            loadAlbums();
+        } else {
+            toast(d.error || '创建失败');
+        }
+    } catch (e) {
+        toast('创建失败');
+    }
+}
+
+// 文件夹浏览器
+async function browseFolderForAlbum(path) {
+    try {
+        const r = await authFetch(`/api/storage/browse?path=${encodeURIComponent(path)}`);
+        const d = await r.json();
+        
+        document.getElementById('folderBrowsePath').textContent = d.path;
+        document.getElementById('folderBrowseParent').onclick = d.parent ? () => browseFolderForAlbum(d.parent) : null;
+        
+        const list = document.getElementById('folderBrowseList');
+        list.innerHTML = d.items.filter(item => item.is_dir).map(item => `
+            <div class="browse-item" onclick="selectFolderForAlbum('${item.path}', '${item.name}')">
+                <span class="browse-icon">📁</span>
+                <span class="browse-name">${item.name}</span>
+            </div>
+        `).join('');
+    } catch (e) {
+        toast('浏览失败');
+    }
+}
+
+function selectFolderForAlbum(path, name) {
+    document.getElementById('folderAlbumPath').value = path;
+    document.getElementById('folderAlbumName').value = name;
+    document.getElementById('folderAlbumSelected').textContent = path;
+    scanFolder(path);
+}
+
+
+function showStorageModal() {
+    showModal('storageModal');
+    loadStorageLocations();
+}
+
+function showFolderAlbumModal() {
+    showModal('folderAlbumModal');
+    browseFolderForAlbum('/mnt');
+}
+
+// ========== 快速浏览硬盘 ==========
+function showFolderBrowser() {
+    showModal('folderBrowserModal');
+    browseFolder('/mnt');
+}
+
+async function browseFolder(path) {
+    try {
+        const r = await authFetch(`/api/storage/browse?path=${encodeURIComponent(path)}`);
+        const d = await r.json();
+        
+        document.getElementById('fbPath').textContent = d.path;
+        document.getElementById('fbParent').onclick = d.parent ? () => browseFolder(d.parent) : null;
+        
+        const list = document.getElementById('fbList');
+        const dirs = d.items.filter(item => item.is_dir);
+        const files = d.items.filter(item => !item.is_dir);
+        const photoCount = files.filter(f => /\.(jpg|jpeg|png|gif|heic|heif|bmp|tiff|webp)$/i.test(f.name)).length;
+        const videoCount = files.filter(f => /\.(mp4|mov|avi|mkv|webm|3gp)$/i.test(f.name)).length;
+        
+        let html = '';
+        
+        // Show media files in current folder
+        if (photoCount > 0 || videoCount > 0) {
+            html += `<div style="padding:8px 12px;color:#94a3b8;font-size:12px;border-bottom:1px solid #1e293b">
+                当前目录: ${photoCount} 张照片, ${videoCount} 个视频
+                <button onclick="quickCreateFolderAlbum('${path}', '${path.split('/').pop() || '根目录'}')" 
+                    style="float:right;background:#6366f1;color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer">
+                    ➕ 创建相册
+                </button>
+            </div>`;
+        }
+        
+        // Show subdirectories
+        html += dirs.map(item => {
+            const dirPhotoCount = item.photo_count || 0;
+            const dirVideoCount = item.video_count || 0;
+            return `
+            <div class="browse-item" style="display:flex;align-items:center;justify-content:space-between">
+                <div onclick="browseFolder('${item.path}')" style="display:flex;align-items:center;flex:1;cursor:pointer">
+                    <span class="browse-icon">📁</span>
+                    <span class="browse-name">${item.name}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <span style="color:#64748b;font-size:12px">${dirPhotoCount > 0 ? dirPhotoCount + '张' : ''} ${dirVideoCount > 0 ? dirVideoCount + '个视频' : ''}</span>
+                    <button onclick="event.stopPropagation();quickCreateFolderAlbum('${item.path}', '${item.name}')" 
+                        style="background:#334155;color:#e2e8f0;border:none;padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap">
+                        ➕ 创建相册
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+        
+        list.innerHTML = html || '<div style="padding:20px;text-align:center;color:#64748b">空文件夹</div>';
+    } catch (e) {
+        toast('浏览失败');
+    }
+}
+
+async function quickCreateFolderAlbum(folderPath, folderName) {
+    if (!confirm(`创建相册「${folderName}」？\n将扫描该文件夹及子目录中的所有照片和视频。`)) return;
+    
+    try {
+        toast('正在创建相册...');
+        const r = await authFetch('/api/albums/folder', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                folder_path: folderPath,
+                name: folderName
+            })
+        });
+        const d = await r.json();
+        
+        if (d.ok) {
+            hideModal('folderBrowserModal');
+            toast(`相册「${folderName}」创建成功！${d.total} 个文件`);
+            loadAlbums();
+        } else {
+            toast(d.error || '创建失败');
+        }
+    } catch (e) {
+        toast('创建失败：' + e.message);
+    }
+}
+
+</script>
+
+<!-- 存储位置管理模态框 -->
+<div class="modal" id="storageModal">
+    <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+        <div class="modal-title">存储位置管理</div>
+        <div id="storageLocations" class="storage-list">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>加载中...</p>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn secondary" onclick="hideModal('storageModal')">关闭</button>
+        </div>
+    </div>
+</div>
+
+<!-- 添加存储位置模态框 -->
+<div class="modal" id="addStorageModal">
+    <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+        <div class="modal-title">添加存储位置</div>
+        <div class="browse-header">
+            <button class="browse-back" id="browseParent">← 返回上级</button>
+            <div class="browse-path" id="currentBrowsePath">/mnt</div>
+        </div>
+        <div id="browseList" class="browse-list"></div>
+        <div class="form-group">
+            <label>选中的路径</label>
+            <input class="modal-input" id="selectedPath" readonly>
+        </div>
+        <div class="form-group">
+            <label>存储名称</label>
+            <input class="modal-input" id="storageName" placeholder="给这个存储位置起个名字">
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn secondary" onclick="hideModal('addStorageModal')">取消</button>
+            <button class="modal-btn primary" onclick="addStorageLocation()">添加</button>
+        </div>
+    </div>
+</div>
+
+<!-- 文件夹映射相册模态框 -->
+<div class="modal" id="folderAlbumModal">
+    <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
+        <div class="modal-title">从文件夹创建相册</div>
+        <div class="browse-header">
+            <button class="browse-back" id="folderBrowseParent">← 返回上级</button>
+            <div class="browse-path" id="folderBrowsePath">/mnt</div>
+        </div>
+        <div id="folderBrowseList" class="browse-list"></div>
+        
+        <div class="form-group">
+            <label>选中的文件夹</label>
+            <div class="selected-folder" id="folderAlbumSelected">未选择</div>
+            <input type="hidden" id="folderAlbumPath">
+        </div>
+        
+        <div id="folderScanResult"></div>
+        
+        <div class="form-group">
+            <label>相册名称</label>
+            <input class="modal-input" id="folderAlbumName" placeholder="相册名称">
+        </div>
+        <div class="form-group">
+            <label>相册描述</label>
+            <input class="modal-input" id="folderAlbumDesc" placeholder="相册描述（可选）">
+        </div>
+        
+        <div class="modal-actions">
+            <button class="modal-btn secondary" onclick="hideModal('folderAlbumModal')">取消</button>
+            <button class="modal-btn primary" onclick="createFolderAlbum()">创建相册</button>
+        </div>
+    </div>
+</div>
+
+<!-- 快速浏览硬盘模态框 -->
+<div class="modal" id="folderBrowserModal">
+    <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
+        <div class="modal-title" style="display:flex;align-items:center;justify-content:space-between">
+            <span>📂 浏览硬盘</span>
+            <button onclick="hideModal('folderBrowserModal')" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer">✕</button>
+        </div>
+        <div class="browse-header">
+            <button class="browse-back" id="fbParent">← 返回上级</button>
+            <div class="browse-path" id="fbPath">/mnt</div>
+        </div>
+        <div id="fbList" class="browse-list"></div>
+        <div id="fbPreview" style="margin-top:12px"></div>
+    </div>
+</div>
+
+</body>
+</html>
