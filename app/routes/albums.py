@@ -28,14 +28,22 @@ def _photo_info_simple(row) -> dict:
 @bp.route("/api/albums")
 @requires_auth
 def list_albums():
-    with get_db() as conn:
+    with get_db(write=False) as conn:
+        # Single query with JOIN for cover photo
         rows = conn.execute("""
-            SELECT a.*,
-                   COUNT(ap.photo_id) as total_count,
-                   SUM(CASE WHEN p.is_deleted=0 THEN 1 ELSE 0 END) as photo_count
+            SELECT a.id, a.name, a.description,
+                   COUNT(ap.photo_id) as photo_count,
+                   cp.id as cover_id, cp.filename as cover_filename,
+                   cp.rel_path as cover_rel_path, cp.original_name as cover_original_name,
+                   cp.thumb_small as cover_thumb_small, cp.thumb_medium as cover_thumb_medium,
+                   cp.file_size as cover_file_size, cp.media_type as cover_media_type,
+                   cp.width as cover_width, cp.height as cover_height,
+                   cp.taken_at as cover_taken_at, cp.is_favorite as cover_is_favorite,
+                   cp.uploaded_at as cover_uploaded_at
             FROM albums a
             LEFT JOIN album_photos ap ON a.id=ap.album_id
-            LEFT JOIN photos p ON p.id=ap.photo_id
+            LEFT JOIN photos p ON p.id=ap.photo_id AND p.is_deleted=0
+            LEFT JOIN photos cp ON cp.id=a.cover_photo_id AND cp.is_deleted=0
             GROUP BY a.id
             ORDER BY a.created_at DESC
         """).fetchall()
@@ -43,18 +51,23 @@ def list_albums():
         albums = []
         for r in rows:
             cover = None
-            if r["cover_photo_id"]:
-                cr = conn.execute("SELECT * FROM photos WHERE id=? AND is_deleted=0", (r["cover_photo_id"],)).fetchone()
-                if cr:
-                    cover = _photo_info_simple(cr)
-            if not cover and r["photo_count"] and r["photo_count"] > 0:
-                first = conn.execute("""
-                    SELECT p.* FROM photos p
-                    JOIN album_photos ap ON p.id=ap.photo_id
-                    WHERE ap.album_id=? AND p.is_deleted=0 LIMIT 1
-                """, (r["id"],)).fetchone()
-                if first:
-                    cover = _photo_info_simple(first)
+            if r["cover_id"]:
+                cover = {
+                    "id": r["cover_id"],
+                    "original_name": r["cover_original_name"],
+                    "rel_path": r["cover_rel_path"],
+                    "thumb_url": f"/api/thumb/{r['cover_thumb_small']}" if r["cover_thumb_small"] else None,
+                    "preview_url": f"/api/thumb/{r['cover_thumb_medium']}" if r["cover_thumb_medium"] else None,
+                    "photo_url": f"/api/photo/{r['cover_rel_path']}",
+                    "file_size": r["cover_file_size"],
+                    "file_size_fmt": format_size(r["cover_file_size"]) if r["cover_file_size"] else "",
+                    "media_type": r["cover_media_type"],
+                    "width": r["cover_width"],
+                    "height": r["cover_height"],
+                    "taken_at": r["cover_taken_at"],
+                    "is_favorite": bool(r["cover_is_favorite"]) if r["cover_is_favorite"] else False,
+                    "uploaded_at": r["cover_uploaded_at"],
+                }
 
             albums.append({
                 "id": r["id"],
@@ -64,8 +77,6 @@ def list_albums():
                 "cover": cover,
             })
     return jsonify({"albums": albums})
-
-
 @bp.route("/api/albums", methods=["POST"])
 @requires_auth
 def create_album():
