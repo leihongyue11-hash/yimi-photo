@@ -82,7 +82,6 @@ def _gen_thumb_async(photo_id, orig_path, rel_path, mtype):
         quality = cfg("thumb_quality", 60)
 
         updates = {}
-        gen_func = make_video_thumbnail if mtype == "video" else make_thumbnail
         for prefix, sz in [("s_", thumb_small()), ("m_", thumb_medium())]:
             tp = os.path.join(tdir, f"{prefix}{base}.jpg")
             if mtype == "video":
@@ -640,6 +639,9 @@ def check_hash():
     hashes = data.get("hashes", [])
     if not hashes:
         return jsonify({"existing": []})
+    # Limit to 1000 hashes per request
+    if len(hashes) > 1000:
+        return jsonify({"error": "Too many hashes, max 1000"}), 400
     with get_db(write=False) as conn:
         placeholders = ",".join("?" * len(hashes))
         rows = conn.execute(
@@ -729,4 +731,6 @@ def generate_thumbs():
             errors += 1
 
     return jsonify({"generated": generated, "errors": errors, "total": len(rows)})
+
+
 

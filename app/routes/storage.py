@@ -1,15 +1,20 @@
-"""
+﻿"""
 壹米云相册 - 存储管理路由
 存储位置管理 + 文件浏览
 """
 import os
 import json
 import logging
+import time
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 from config import photos_dir, get as cfg, set_config
 from auth import requires_auth
 from security import safe_browse_path, is_safe_path
+
+# Cache for storage location stats
+_stats_cache = {}
+_stats_cache_ttl = 60  # seconds
 
 logger = logging.getLogger(__name__)
 bp = Blueprint("storage", __name__)
@@ -50,19 +55,31 @@ def list_storage_locations():
         loc["exists"] = os.path.exists(loc["path"])
         if loc["exists"]:
             try:
-                photo_count = video_count = 0
-                for root, dirs, files in os.walk(loc["path"]):
-                    if "/." in root:
-                        continue
-                    for f in files:
-                        ext = f.rsplit(".", 1)[-1].lower() if "." in f else ""
-                        if ext in ("jpg", "jpeg", "png", "gif", "heic", "heif", "bmp", "tiff", "webp"):
-                            photo_count += 1
-                        elif ext in ("mp4", "mov", "avi", "mkv", "webm", "3gp"):
-                            video_count += 1
-                loc["photo_count"] = photo_count
-                loc["video_count"] = video_count
-                loc["total_count"] = photo_count + video_count
+                cache_key = loc["path"]
+                cached = _stats_cache.get(cache_key)
+                now_ts = time.time()
+                if cached and now_ts - cached["ts"] < _stats_cache_ttl:
+                    loc["photo_count"] = cached["photo_count"]
+                    loc["video_count"] = cached["video_count"]
+                    loc["total_count"] = cached["total_count"]
+                else:
+                    photo_count = video_count = 0
+                    for root, dirs, files in os.walk(loc["path"]):
+                        if "/." in root:
+                            continue
+                        for f in files:
+                            ext = f.rsplit(".", 1)[-1].lower() if "." in f else ""
+                            if ext in ("jpg", "jpeg", "png", "gif", "heic", "heif", "bmp", "tiff", "webp"):
+                                photo_count += 1
+                            elif ext in ("mp4", "mov", "avi", "mkv", "webm", "3gp"):
+                                video_count += 1
+                    _stats_cache[cache_key] = {
+                        "ts": now_ts, "photo_count": photo_count,
+                        "video_count": video_count, "total_count": photo_count + video_count
+                    }
+                    loc["photo_count"] = photo_count
+                    loc["video_count"] = video_count
+                    loc["total_count"] = photo_count + video_count
             except Exception:
                 loc["photo_count"] = loc["video_count"] = loc["total_count"] = 0
         else:
@@ -177,3 +194,4 @@ def browse_storage():
         return jsonify({"error": "Permission denied"}), 403
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+

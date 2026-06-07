@@ -1,4 +1,4 @@
-"""
+﻿"""
 壹米云相册 - 标签路由
 """
 import sqlite3
@@ -63,5 +63,6 @@ def add_tags_to_photo(pid):
 @requires_auth
 def remove_tag_from_photo(pid, tid):
     with get_db() as conn:
-        conn.execute("DELETE FROM photo_tags WHERE photo_id=? AND tag_id=?", (pid, tid))
+        safe_execute(conn, "DELETE FROM photo_tags WHERE photo_id=? AND tag_id=?", (pid, tid))
     return jsonify({"ok": True})
+

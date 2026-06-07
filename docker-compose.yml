@@ -1,8 +1,8 @@
-version: "3.8"
+﻿version: "3.8"
 
 services:
   yimi-photo:
-    image: yimi-photo:latest
+    image: yimi-photo:v3.0
     container_name: yimi-photo
     restart: unless-stopped
     ports:
@@ -22,3 +22,4 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+

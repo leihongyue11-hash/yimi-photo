@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS base
+﻿FROM python:3.11-slim AS base
 
 # 安装最小依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -28,10 +28,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ .
 
 RUN mkdir -p /data/photos /data/photos/.thumbs
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:8080/api/stats || exit 1
 
-CMD ["python3", "server.py"]
+ENTRYPOINT ["/app/entrypoint.sh"]
+

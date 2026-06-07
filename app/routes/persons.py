@@ -1,4 +1,4 @@
-"""
+﻿"""
 壹米云相册 - 人物路由
 """
 import logging
@@ -18,20 +18,42 @@ def _photo_info(row):
 @bp.route("/api/persons")
 @requires_auth
 def list_persons():
-    with get_db() as conn:
+    with get_db(write=False) as conn:
         rows = conn.execute("""
-            SELECT p.*, COUNT(pp.photo_id) as photo_count
+            SELECT p.id, p.name, p.cover_photo_id,
+                   COUNT(pp.photo_id) as photo_count,
+                   cp.id as cover_id, cp.filename as cover_filename,
+                   cp.rel_path as cover_rel_path, cp.original_name as cover_original_name,
+                   cp.thumb_small as cover_thumb_small, cp.thumb_medium as cover_thumb_medium,
+                   cp.file_size as cover_file_size, cp.media_type as cover_media_type,
+                   cp.width as cover_width, cp.height as cover_height,
+                   cp.taken_at as cover_taken_at, cp.is_favorite as cover_is_favorite,
+                   cp.uploaded_at as cover_uploaded_at
             FROM persons p
             LEFT JOIN photo_persons pp ON p.id=pp.person_id
+            LEFT JOIN photos cp ON cp.id=p.cover_photo_id AND cp.is_deleted=0
             GROUP BY p.id ORDER BY photo_count DESC
         """).fetchall()
         persons = []
         for r in rows:
             cover = None
-            if r["cover_photo_id"]:
-                cr = conn.execute("SELECT * FROM photos WHERE id=?", (r["cover_photo_id"],)).fetchone()
-                if cr:
-                    cover = _photo_info(cr)
+            if r["cover_id"]:
+                cover = {
+                    "id": r["cover_id"],
+                    "original_name": r["cover_original_name"],
+                    "rel_path": r["cover_rel_path"],
+                    "thumb_url": f"/api/thumb/{r['cover_thumb_small']}" if r["cover_thumb_small"] else None,
+                    "preview_url": f"/api/thumb/{r['cover_thumb_medium']}" if r["cover_thumb_medium"] else None,
+                    "photo_url": f"/api/photo/{r['cover_rel_path']}",
+                    "file_size": r["cover_file_size"],
+                    "file_size_fmt": format_size(r["cover_file_size"]) if r["cover_file_size"] else "",
+                    "media_type": r["cover_media_type"],
+                    "width": r["cover_width"],
+                    "height": r["cover_height"],
+                    "taken_at": r["cover_taken_at"],
+                    "is_favorite": bool(r["cover_is_favorite"]) if r["cover_is_favorite"] else False,
+                    "uploaded_at": r["cover_uploaded_at"],
+                }
             persons.append({"id": r["id"], "name": r["name"], "photo_count": r["photo_count"], "cover": cover})
     return jsonify({"persons": persons})
 
@@ -69,8 +91,8 @@ def get_person(pid):
 @requires_auth
 def delete_person(pid):
     with get_db() as conn:
-        conn.execute("DELETE FROM photo_persons WHERE person_id=?", (pid,))
-        conn.execute("DELETE FROM persons WHERE id=?", (pid,))
+        safe_execute(conn, "DELETE FROM photo_persons WHERE person_id=?", (pid,))
+        safe_execute(conn, "DELETE FROM persons WHERE id=?", (pid,))
     return jsonify({"ok": True})
 
 
@@ -82,7 +104,7 @@ def rename_person(pid):
     if not name:
         return jsonify({"error": "name required"}), 400
     with get_db() as conn:
-        conn.execute("UPDATE persons SET name=? WHERE id=?", (name, pid))
+        safe_execute(conn, "UPDATE persons SET name=? WHERE id=?", (name, pid))
     return jsonify({"ok": True})
 
 
@@ -93,9 +115,9 @@ def add_photos_to_person(pid):
     ids = data.get("photo_ids", [])
     with get_db() as conn:
         for photo_id in ids:
-            conn.execute("INSERT OR IGNORE INTO photo_persons (photo_id, person_id) VALUES (?,?)", (photo_id, pid))
+            safe_execute(conn, "INSERT OR IGNORE INTO photo_persons (photo_id, person_id) VALUES (?,?)", (photo_id, pid))
         if ids:
-            conn.execute("UPDATE persons SET cover_photo_id=? WHERE id=?", (ids[0], pid))
+            safe_execute(conn, "UPDATE persons SET cover_photo_id=? WHERE id=?", (ids[0], pid))
     return jsonify({"ok": True, "added": len(ids)})
 
 
@@ -103,5 +125,7 @@ def add_photos_to_person(pid):
 @requires_auth
 def remove_photo_from_person(pid, photo_id):
     with get_db() as conn:
-        conn.execute("DELETE FROM photo_persons WHERE photo_id=? AND person_id=?", (photo_id, pid))
+        safe_execute(conn, "DELETE FROM photo_persons WHERE photo_id=? AND person_id=?", (photo_id, pid))
     return jsonify({"ok": True})
+
+
