@@ -1,4 +1,4 @@
-# 壹米云相册 v3.0
+﻿# 壹米云相册 v3.0
 
 轻量级私有云相册，专为 NAS 用户设计。一条命令安装，手机电脑随时访问。
 
@@ -22,9 +22,9 @@
 
 ```bash
 # 1. 下载安装包
-wget https://github.com/your-repo/yimi-photo/releases/latest/download/yimi-photo.tar.gz
-tar xzf yimi-photo.tar.gz
-cd yimi-photo
+wget https://github.com/leihongyue11-hash/yimi-photo/releases/latest/download/yimi-photo-v3.0.tar.gz
+tar xzf yimi-photo-v3.0.tar.gz
+cd yimi-photo-release
 
 # 2. 一键安装
 bash install.sh
@@ -130,3 +130,4 @@ MIT License - 自由使用，自由分享。
 ---
 
 **壹米云相册** - 你的照片，你的云端。
+
