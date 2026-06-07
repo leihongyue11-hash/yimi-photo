@@ -1,4 +1,4 @@
-"""
+﻿"""
 壹米云相册 - 照片路由
 上传、列表、时间线、收藏、删除、下载
 """
@@ -132,17 +132,18 @@ def upload():
 
             # 流式写入临时文件 + 流式 hash（不读入内存）
             tmp = tempfile.NamedTemporaryFile(delete=False, suffix="." + ext)
-            h = hashlib.md5()
-            size = 0
-            while True:
-                chunk = f.read(65536)
-                if not chunk:
-                    break
-                tmp.write(chunk)
-                h.update(chunk)
-                size += len(chunk)
-            tmp.close()
-            fh = h.hexdigest()
+            try:
+                h = hashlib.md5()
+                size = 0
+                while True:
+                    chunk = f.read(65536)
+                    if not chunk:
+                        break
+                    tmp.write(chunk)
+                    h.update(chunk)
+                    size += len(chunk)
+                tmp.close()
+                fh = h.hexdigest()
 
             # 检查重复
             dup = safe_execute(conn, "SELECT id FROM photos WHERE file_hash=? AND is_deleted=0", (fh,)).fetchone()
@@ -178,7 +179,13 @@ def upload():
             sname = os.path.basename(sp)
 
             # 移动临时文件到目标位置
-            shutil.move(tmp.name, sp)
+                shutil.move(tmp.name, sp)
+            except Exception:
+                try:
+                    os.unlink(tmp.name)
+                except OSError:
+                    pass
+                raise
 
             mt = media_type(ext)
             w = h_dim = None
@@ -722,3 +729,4 @@ def generate_thumbs():
             errors += 1
 
     return jsonify({"generated": generated, "errors": errors, "total": len(rows)})
+

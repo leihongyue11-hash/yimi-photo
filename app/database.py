@@ -1,4 +1,4 @@
-"""
+﻿"""
 壹米云相册 - 数据库层
 线程安全连接池 + 上下文管理器 + 自动迁移
 """
@@ -115,6 +115,7 @@ def get_db(write: bool = True):
 
 
 def safe_execute(conn, sql, params=(), max_retries=3):
+    """Execute SQL with retry on database locked errors."""
     for attempt in range(max_retries):
         try:
             return conn.execute(sql, params)
@@ -123,7 +124,8 @@ def safe_execute(conn, sql, params=(), max_retries=3):
                 time.sleep(0.1 * (attempt + 1))
                 continue
             raise
-    return None
+    # Should never reach here, but just in case
+    raise sqlite3.OperationalError("Max retries exceeded")
 
 
 def migrate_db():
@@ -220,3 +222,4 @@ def _do_migrate():
                 pass
 
     logger.info("数据库迁移完成")
+

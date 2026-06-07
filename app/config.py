@@ -1,15 +1,14 @@
-"""
+﻿"""
 壹米云相册 - 配置管理
 支持环境变量 + 配置文件 + 首次安装向导
 多进程安全：自动检测配置文件变更并重载
 """
 import os
 import json
-import secrets
 import threading
 import logging
 
-__version__ = "2.1.2"
+__version__ = "3.0.0"
 
 logger = logging.getLogger(__name__)
 
@@ -106,23 +105,13 @@ def init_config(force=False):
         "PORT": ("port", int),
         "MAX_UPLOAD_MB": ("max_upload_mb", int),
         "ALLOWED_EXTENSIONS": ("allowed_extensions", str),
-        "YIMI_PASSWORD": ("password", str),
     }
     for env_key, (cfg_key, typ) in env_map.items():
         val = os.environ.get(env_key)
         if val is not None:
             _config[cfg_key] = typ(val)
 
-    if "password" not in _config:
-        _config["password"] = secrets.token_urlsafe(12)
-        _config["password_is_default"] = True
-        _save_file()
-        _config_mtime = os.path.getmtime(_config_path())
-        logger.warning("=" * 50)
-        logger.warning("首次启动！默认密码: %s", _config["password"])
-        logger.warning("请尽快在设置页面修改密码！")
-        logger.warning("=" * 50)
-    elif not file_cfg:
+    if not file_cfg:
         _save_file()
         _config_mtime = os.path.getmtime(_config_path())
 
@@ -159,14 +148,8 @@ def get_all() -> dict:
         init_config()
     _check_reload()
     safe = dict(_config)
-    for k in ("password", "token_secret"):
-        if k in safe:
-            safe[k] = "***"
     return safe
 
-
-def is_first_run() -> bool:
-    return get("password_is_default", False)
 
 
 def photos_dir() -> str:
@@ -193,3 +176,6 @@ def thumb_small() -> tuple:
 
 def thumb_medium() -> tuple:
     return (get("thumb_medium_w", 800), get("thumb_medium_h", 800))
+
+
+

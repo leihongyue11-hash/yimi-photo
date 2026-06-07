@@ -1,4 +1,4 @@
-"""
+﻿"""
 壹米云相册 - 相册路由 (修复版)
 修复: 文件夹相册创建时 database locked 问题
 """
@@ -292,3 +292,4 @@ def create_folder_album():
         "total": added_count + linked_count,
         "errors": errors[:5] if errors else [],
     })
+

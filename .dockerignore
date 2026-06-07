@@ -1,0 +1,27 @@
+﻿# Docker image blobs
+yimi-photo-v3.0/
+
+# Release archives
+*.tar.gz
+*.tar
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Environment
+.env

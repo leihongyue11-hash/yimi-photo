@@ -1,4 +1,4 @@
-"""
+﻿"""
 壹米云相册 - 服务器入口
 支持 gunicorn（生产）和内置 WSGI（开发）
 """
@@ -26,7 +26,7 @@ def run_dev_server(app, host="0.0.0.0", port=8080):
     server = ThreadedWSGIServer((host, port), QuietHandler)
     server.set_app(app)
     server.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    print(f" * Yimi-Photo v2.0.0 running on http://{host}:{port}")
+    print(f" * Yimi-Photo v3.0.0 running on http://{host}:{port}")
     print(f" * Threaded WSGI mode")
     try:
         server.serve_forever()
@@ -41,3 +41,4 @@ if __name__ == "__main__":
     app = create_app()
     port = int(os.environ.get("PORT", "8080"))
     run_dev_server(app, port=port)
+

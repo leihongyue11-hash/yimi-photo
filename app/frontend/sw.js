@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yimi-photo-v4';
+﻿const CACHE_NAME = 'yimi-photo-v3';
 const STATIC_ASSETS = ['/manifest.json'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(STATIC_ASSETS)));
@@ -17,3 +17,4 @@ self.addEventListener('fetch', e => {
     caches.match(e.request).then(r => r || fetch(e.request))
   );
 });
+

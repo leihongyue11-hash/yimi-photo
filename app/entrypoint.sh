@@ -1,8 +1,8 @@
-#!/bin/bash
+﻿#!/bin/bash
 set -e
 
 echo "========================================="
-echo "  壹米云相册 v2.1.0"
+echo "  壹米云相册 v3.0.0"
 echo "========================================="
 echo "数据目录: ${YIMI_DATA_DIR:-/data/photos}"
 echo "端口: ${PORT:-8080}"
@@ -21,3 +21,4 @@ exec gunicorn \
     --error-logfile - \
     --log-level info \
     "app:create_app()"
+
